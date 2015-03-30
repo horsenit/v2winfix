@@ -195,6 +195,20 @@ map<wstring, vector<replacement>> replacements{
 		{ Borderless, 0x00069AE0, vector<byte>{ 0x90, 0x90, 0x90 }, vector<byte>{ 0x83, 0xC2, 0x1E } }, // add edx, 0x1e
 		{ Borderless, 0x00069AE4, vector<byte>{ 0x6a, 0x00, 0x6a, 0x00 }, vector<byte>{ 0x6a, 0x1E, 0x6a, 0x1E } } // double push 1e to 00
 	} },
+
+	// Sengoku
+	{ L"SengokuGame.exe", {
+		{ Always, 0x397FB0, replacement::Jmp, modifiedGetCursorPos, PREV_GETMOUSEPOS },
+
+		{ Borderless, 0x002E8F1B + 1, WS_POPUP, WS_OVERLAPPEDWINDOW },
+		{ Borderless, 0x0032167D + 2, WS_POPUP, WS_OVERLAPPEDWINDOW },
+		{ Borderless, 0x0032225F + 1, WS_POPUP, WS_OVERLAPPEDWINDOW },
+		{ Borderless, 0x00322294 + 1, WS_POPUP, WS_OVERLAPPEDWINDOW },
+
+		{ Borderless, 0x00322247, vector<byte>{ 0x90, 0x90, 0x90 }, vector<byte>{ 0x83, 0xC3, 0x1E } }, // add ebx, 0x1e
+		{ Borderless, 0x0032224B, vector<byte>{ 0x90, 0x90, 0x90 }, vector<byte>{ 0x83, 0xC0, 0x1E } }, // add eax, 0x1e
+		{ Borderless, 0x0032224F, vector<byte>{ 0x6a, 0x00, 0x6a, 0x00 }, vector<byte>{ 0x6a, 0x1E, 0x6a, 0x1E } } // double push 1e to 00
+	} }
 };
 
 /*
