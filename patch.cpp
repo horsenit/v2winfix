@@ -376,7 +376,7 @@ void applyPatch(bool verbose)
 	
 	if (!found)
 	{
-		MessageBoxA(NULL, "Couldn't find cursor function (only compatible with Victoria 2, Hearts of Iron 3, March of the Eagles.)"
+		MessageBoxA(NULL, "Couldn't find cursor function (only compatible with Victoria 2, Hearts of Iron 3, March of the Eagles, Sengoku, Europa Universalis 3.)"
 			"The game will function normally (that is, broke ass cursor).", "v2winfix error", MB_OK | MB_ICONERROR);
 	}
 }
