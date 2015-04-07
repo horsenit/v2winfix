@@ -208,7 +208,23 @@ map<wstring, vector<replacement>> replacements{
 		{ Borderless, 0x00322247, vector<byte>{ 0x90, 0x90, 0x90 }, vector<byte>{ 0x83, 0xC3, 0x1E } }, // add ebx, 0x1e
 		{ Borderless, 0x0032224B, vector<byte>{ 0x90, 0x90, 0x90 }, vector<byte>{ 0x83, 0xC0, 0x1E } }, // add eax, 0x1e
 		{ Borderless, 0x0032224F, vector<byte>{ 0x6a, 0x00, 0x6a, 0x00 }, vector<byte>{ 0x6a, 0x1E, 0x6a, 0x1E } } // double push 1e to 00
+	} },
+
+	// EU3
+	{ L"eu3game.exe", {
+		{ Always, 0x100D30, replacement::Jmp, modifiedGetCursorPos, PREV_GETMOUSEPOS },
+
+		{ Borderless, 0x00036D31 + 1, WS_POPUP, WS_OVERLAPPEDWINDOW },
+		{ Borderless, 0x0004BD88 + 1, WS_POPUP, WS_OVERLAPPEDWINDOW },
+		{ Borderless, 0x0004BF39 + 1, WS_POPUP, WS_OVERLAPPEDWINDOW },
+		{ Borderless, 0x0004BDD7 + 1, WS_POPUP, WS_OVERLAPPEDWINDOW },
+
+		{ Borderless, 0x0004BD6C, vector<byte>{ 0x90, 0x90, 0x90 }, vector<byte>{ 0x83, 0xC1, 0x1E } }, // add ecx, 0x1e
+		{ Borderless, 0x0004BD70, vector<byte>{ 0x90, 0x90, 0x90 }, vector<byte>{ 0x83, 0xC2, 0x1E } }, // add edx, 0x1e
+		{ Borderless, 0x0004BD74, vector<byte>{ 0x6a, 0x00, 0x6a, 0x00 }, vector<byte>{ 0x6a, 0x1E, 0x6a, 0x1E } } // double push 1e to 00
 	} }
+
+	// EU Rome steam ver has some DRM, dont want to deal with it
 };
 
 /*
