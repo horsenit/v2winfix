@@ -322,7 +322,7 @@ void readSettings()
 	PathAppendW(settings_path, L"v2winfix.ini");
 	if (!PathFileExistsW(settings_path))
 	{
-		WritePrivateProfileStringW(L"v2winfix", L"borderless", L"0", settings_path);
+		WritePrivateProfileStringW(L"v2winfix", L"borderless", L"1", settings_path);
 	}
 	g_borderless = GetPrivateProfileIntW(L"v2winfix", L"borderless", 0, settings_path);
 }
