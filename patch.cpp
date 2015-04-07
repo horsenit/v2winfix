@@ -84,6 +84,10 @@ struct replacement
 		: when(when), address(address), value(to_vec(value)), compare(to_vec(compare)) {};
 	
 	// assumes func pointer, casts to uint
+	template<typename T>
+	replacement(When when, UInt32 address, decltype(type) type, T func)
+		: when(when), address(address), type(type), value(to_vec((UInt32)func)) {};
+
 	template<typename T, typename U>
 	replacement(When when, UInt32 address, decltype(type) type, T func, const U& compare)
 		: when(when), address(address), type(type), value(to_vec((UInt32)func)), compare(to_vec(compare)) {}
@@ -128,6 +132,17 @@ mov esi, ecx
 // this shit could fuck up real bad assuming the following bytes are found at one of the following addresses
 // but whata are the chances of thAT happening/???????????????????? NOT GOOD ffffffffuuuuuuuuuucccccckkkkkkkk yyyyyyoooooouuuuuu
 const vector<byte> PREV_GETMOUSEPOS{ 0x55, 0x8B, 0xEC, 0x83, 0xEC, 0x18, 0x56, 0x8D, 0x45, 0xF8, 0x50, 0x8B, 0xF1 };
+
+/*
+Rome slightly diff
+sub esp, 18h
+push esi
+lea eax, [esp+4]
+push eax
+mov esi, ecx
+;call ...
+*/
+const vector<byte> ROME_PREV_GETMOUSEPOS{ 0x83, 0xEC, 0x18, 0x56, 0x8D, 0x44, 0x24, 0x04, 0x50, 0x8B, 0xF1 };
 
 const DWORD NEW_STYLE = WS_POPUP;
 
@@ -222,9 +237,22 @@ map<wstring, vector<replacement>> replacements{
 		{ Borderless, 0x0004BD6C, vector<byte>{ 0x90, 0x90, 0x90 }, vector<byte>{ 0x83, 0xC1, 0x1E } }, // add ecx, 0x1e
 		{ Borderless, 0x0004BD70, vector<byte>{ 0x90, 0x90, 0x90 }, vector<byte>{ 0x83, 0xC2, 0x1E } }, // add edx, 0x1e
 		{ Borderless, 0x0004BD74, vector<byte>{ 0x6a, 0x00, 0x6a, 0x00 }, vector<byte>{ 0x6a, 0x1E, 0x6a, 0x1E } } // double push 1e to 00
-	} }
+	} },
 
-	// EU Rome steam ver has some DRM, dont want to deal with it
+	// EU:Rome, steam ver uses steam wrapper, don't have non-steam ver.
+	// below is correct, but needs to be loaded later
+	{ L"RomeGame.dump.exe", {
+		{ Always, 0x4FB5B0, replacement::Jmp, modifiedGetCursorPos/* , ROME_PREV_GETMOUSEPOS*/ },
+
+		//{ Borderless, 0x004654CA + 1, WS_POPUP, WS_OVERLAPPEDWINDOW },
+		{ Borderless, 0x0046632B + 1, WS_POPUP/* , WS_OVERLAPPEDWINDOW*/ },
+		{ Borderless, 0x00466365 + 1, WS_POPUP/* , WS_OVERLAPPEDWINDOW*/ },
+		{ Borderless, 0x004654CA + 1, WS_POPUP/* , WS_OVERLAPPEDWINDOW*/ },
+
+		{ Borderless, 0x00466312, vector<byte>{ 0x90, 0x90, 0x90 }/*, vector<byte>{ 0x83, 0xC6, 0x1E }*/ }, // add esi, 0x1e
+		{ Borderless, 0x00466316, vector<byte>{ 0x90, 0x90, 0x90 }/*, vector<byte>{ 0x83, 0xC1, 0x1E }*/ }, // add ecx, 0x1e
+		{ Borderless, 0x0046631A, vector<byte>{ 0x6a, 0x00, 0x6a, 0x00 }/*, vector<byte>{ 0x6a, 0x1E, 0x6a, 0x1E }*/ } // double push 1e to 00
+	} }
 };
 
 /*
