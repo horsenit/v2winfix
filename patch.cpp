@@ -238,21 +238,22 @@ map<wstring, vector<replacement>> replacements{
 		{ Borderless, 0x0004BD70, vector<byte>{ 0x90, 0x90, 0x90 }, vector<byte>{ 0x83, 0xC2, 0x1E } }, // add edx, 0x1e
 		{ Borderless, 0x0004BD74, vector<byte>{ 0x6a, 0x00, 0x6a, 0x00 }, vector<byte>{ 0x6a, 0x1E, 0x6a, 0x1E } } // double push 1e to 00
 	} },
+};
 
-	// EU:Rome, steam ver uses steam wrapper, don't have non-steam ver.
-	// below is correct, but needs to be loaded later
-	{ L"RomeGame.dump.exe", {
-		{ Always, 0x4FB5B0, replacement::Jmp, modifiedGetCursorPos/* , ROME_PREV_GETMOUSEPOS*/ },
+map<wstring, vector<replacement>> post_hook_replacements{
+	// EU: Rome
+	{ L"RomeGame.exe", {
+		{ Always, 0x4FB5B0, replacement::Jmp, modifiedGetCursorPos, ROME_PREV_GETMOUSEPOS },
 
 		//{ Borderless, 0x004654CA + 1, WS_POPUP, WS_OVERLAPPEDWINDOW },
-		{ Borderless, 0x0046632B + 1, WS_POPUP/* , WS_OVERLAPPEDWINDOW*/ },
-		{ Borderless, 0x00466365 + 1, WS_POPUP/* , WS_OVERLAPPEDWINDOW*/ },
-		{ Borderless, 0x004654CA + 1, WS_POPUP/* , WS_OVERLAPPEDWINDOW*/ },
+		{ Borderless, 0x0046632B + 1, WS_POPUP, WS_OVERLAPPEDWINDOW },
+		{ Borderless, 0x00466365 + 1, WS_POPUP, WS_OVERLAPPEDWINDOW },
+		{ Borderless, 0x004654CA + 1, WS_POPUP, WS_OVERLAPPEDWINDOW },
 
-		{ Borderless, 0x00466312, vector<byte>{ 0x90, 0x90, 0x90 }/*, vector<byte>{ 0x83, 0xC6, 0x1E }*/ }, // add esi, 0x1e
-		{ Borderless, 0x00466316, vector<byte>{ 0x90, 0x90, 0x90 }/*, vector<byte>{ 0x83, 0xC1, 0x1E }*/ }, // add ecx, 0x1e
-		{ Borderless, 0x0046631A, vector<byte>{ 0x6a, 0x00, 0x6a, 0x00 }/*, vector<byte>{ 0x6a, 0x1E, 0x6a, 0x1E }*/ } // double push 1e to 00
-	} }
+		{ Borderless, 0x00466312, vector<byte>{ 0x90, 0x90, 0x90 }, vector<byte>{ 0x83, 0xC6, 0x1E } }, // add esi, 0x1e
+		{ Borderless, 0x00466316, vector<byte>{ 0x90, 0x90, 0x90 }, vector<byte>{ 0x83, 0xC1, 0x1E } }, // add ecx, 0x1e
+		{ Borderless, 0x0046631A, vector<byte>{ 0x6a, 0x00, 0x6a, 0x00 }, vector<byte>{ 0x6a, 0x1E, 0x6a, 0x1E } } // double push 1e to 00
+	} },
 };
 
 /*
@@ -346,6 +347,54 @@ void do_replacement(replacement& r)
 	}
 }
 
+void do_replacements(vector<replacement>& r)
+{
+	for (auto i = r.begin(); i != r.end(); i++)
+	{
+		switch (i->when)
+		{
+		case Always:
+			do_replacement(*i);
+			break;
+		case Borderless:
+			if (g_borderless)
+				do_replacement(*i);
+			break;
+		}
+	}
+}
+
+// HAMMER IT HOME UGLY AS SIN, SIMILAR SOUNDING FUNCTION NAMES EVERYWHERE
+vector<replacement> * g_delayed = nullptr;
+UInt32 g_oldAddr = 0;
+byte g_oldBytes[5];
+
+void doPatch()
+{
+	do_replacements(*g_delayed);
+	// restore old function
+	SafeWriteBuf(g_oldAddr, g_oldBytes, ARRAYSIZE(g_oldBytes));
+	FlushInstructionCache(GetCurrentProcess(), NULL, 0);
+}
+
+__declspec(naked) void hookedFunction()
+{
+__asm {
+	call doPatch
+	jmp g_oldAddr
+}
+}
+
+void doApiPatch(vector<replacement>& r)
+{
+	// replace first 5 bytes with a jump to our hook (which will restore, and then call back into it)
+	g_delayed = &r;
+	g_oldAddr = (UInt32)GetProcAddress(GetModuleHandle(L"kernel32.dll"), "CreateProcessA");
+	memcpy(g_oldBytes, (void*)g_oldAddr, ARRAYSIZE(g_oldBytes));
+	WriteRelJump(g_oldAddr, (UInt32)hookedFunction);
+	FlushInstructionCache(GetCurrentProcess(), NULL, 0);
+}
+
 void applyPatch(bool verbose)
 {
 	bool found = false;
@@ -357,20 +406,25 @@ void applyPatch(bool verbose)
 		if (!wcsicmp(i->first.c_str(), exeName))
 		{
 			found = true;
-			for (auto j = i->second.begin(); j != i->second.end(); j++)
-			{
-				switch (j->when)
-				{
-				case Always:
-					do_replacement(*j);
-					break;
-				case Borderless:
-					if (g_borderless)
-						do_replacement(*j);
-					break;
-				}
-			}
+			if (verbose)
+				MessageBoxA(NULL, "Found executable", "v2winfix", MB_OK | MB_ICONASTERISK);
+			do_replacements(i->second);
 			break;
+		}
+	}
+
+	if (!found)
+	{
+		for (auto i = post_hook_replacements.begin(); i != post_hook_replacements.end(); i++)
+		{
+			if (!wcsicmp(i->first.c_str(), exeName))
+			{
+				found = true;
+				if (verbose)
+					MessageBoxA(NULL, "Found executable", "v2winfix", MB_OK | MB_ICONASTERISK);
+				doApiPatch(i->second);
+				break;
+			}
 		}
 	}
 	
