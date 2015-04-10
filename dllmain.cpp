@@ -1,4 +1,5 @@
 #include <Windows.h>
+#include <stdio.h>
 #include "patch.h"
 #include "dinput8.h"
 
@@ -20,7 +21,11 @@ BOOL WINAPI DllMain(HINSTANCE hInstDll, DWORD reason, LPVOID reserved)
 		readSettings();
 		applyPatch(verbose);
 		if (verbose)
-			MessageBoxA(NULL, "hey we did it", "yo", MB_OK);
+		{
+			char buf[4444];
+			sprintf(buf, "DllMain called reason %d\n%x", reason, hInstDll);
+			MessageBoxA(NULL, buf, "yo", MB_OK);
+		}
 	}
 	return TRUE;
 }
