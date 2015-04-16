@@ -389,7 +389,7 @@ void doApiPatch(vector<replacement>& r)
 {
 	// replace first 5 bytes with a jump to our hook (which will restore, and then call back into it)
 	g_delayed = &r;
-	g_oldAddr = (UInt32)GetProcAddress(GetModuleHandle(L"kernel32.dll"), "CreateProcessA");
+	g_oldAddr = (UInt32)GetProcAddress(GetModuleHandle(L"user32.dll"), "FindWindowExA");
 	memcpy(g_oldBytes, (void*)g_oldAddr, ARRAYSIZE(g_oldBytes));
 	WriteRelJump(g_oldAddr, (UInt32)hookedFunction);
 	FlushInstructionCache(GetCurrentProcess(), NULL, 0);
