@@ -369,7 +369,7 @@ vector<replacement> * g_delayed = nullptr;
 UInt32 g_oldAddr = 0;
 byte g_oldBytes[5];
 
-void doPatch()
+void __stdcall doPatch()
 {
 	do_replacements(*g_delayed);
 	// restore old function
